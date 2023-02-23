@@ -62,17 +62,9 @@ export async function createStakeAccount(payload: Payload): Promise<any> {
     createAccountTransaction.recentBlockhash = block.blockhash;
     createAccountTransaction.feePayer = userPubkey;
 
-    const result = {
-      network: net,
-      amount: amount,
-      serializedTransaction: createAccountTransaction
+     return createAccountTransaction
           .serialize({ requireAllSignatures: false, verifySignatures: false })
-          .toString('hex'),
-      stakeAccountSecretKey: stakeAccountSecretKey,
-      stakeAccountPublicKey: stakeAccountPublicKey
-    }
-    console.log("create acc data",result)
-    return result;
+          .toString('hex')
   } catch (e) {
     throw e;
   }

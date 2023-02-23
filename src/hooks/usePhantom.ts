@@ -1,24 +1,33 @@
 import {useEffect, useState} from 'react';
-
-import Solflare from '@solflare-wallet/sdk';
 import {Transaction, Connection, SystemProgram, clusterApiUrl, LAMPORTS_PER_SOL, PublicKey} from "@solana/web3.js";
-import {SOLANA_API_DEV} from "./api/solana/constants";
-import {delegate} from "./api/solana/delegate";
-import {getConnection} from "./api/solana/utils/getConnection";
+import {PhantomProvider} from "./interfaces";
 
 
-export function useLedgerCosmosWallet() {
-    const [publicKey, setPublicKey] = useState("");
+export function usePhantom() {
+    const [publicKey, setPublicKey] = useState<PhantomProvider | undefined>(
+        undefined
+    );
     const [status, setStatus] = useState('disconnected');
-    const [wallet, setWallet] = useState(null);
+    // const [wallet, setWallet] = useState(null);
+    const [provider, setProvider] = useState<PhantomProvider | undefined>(
+        undefined
+    );
+    const getProvider = (): PhantomProvider | undefined => {
+        if ("solana" in window) {
+            // @ts-ignore
+            const provider = window.solana as any;
+            if (provider.isPhantom) return provider as PhantomProvider;
+        }
+    };
 
-    const [isSolflare, setIsSolflare] = useState(false)
-
+    // const [isSolflare, setIsSolflare] = useState(false)
     useEffect(() => {
-        // @ts-ignore
-        setIsSolflare(window["solflare"]?.isSolflare || false)
+        const provider = getProvider();
 
-    }, [])
+        if (provider) setProvider(provider);
+        else setProvider(undefined);
+    }, []);
+
 
     /**
      *
@@ -29,57 +38,59 @@ export function useLedgerCosmosWallet() {
         }
         try {
             // @ts-ignore
-            await wallet.disconnect();
+// @ts-ignore
+            const { solana } = window;
 
-            setStatus("disconnected")
-            setPublicKey("");
-            setWallet(null);
+            if (publicKey && solana) {
+                await (solana as PhantomProvider).disconnect();
+                setPublicKey(undefined);
+                setStatus("disconnected")
+            }
         } catch (e) {
             console.log("disconnect error", e)
 
         }
     }
+    const connect = async () => {
+        // @ts-ignore
+        const { solana } = window;
 
-    async function connect() {
-        try {
-            setStatus('connecting');
-
-            const wallet = new Solflare();
-            console.log("wallet", wallet)
-            await wallet.connect();
-
-            // @ts-ignore
-            setPublicKey(wallet.publicKey.toString());
-            // @ts-ignore
-            setWallet(wallet);
-
-            setStatus("connected")
-        } catch (e) {
-            setStatus("disconnected")
-            console.log("connect error", e)
+        if (solana) {
+            try {
+                const response = await solana.connect();
+                console.log('wallet account ', response.publicKey.toString());
+                setPublicKey(response.publicKey.toString());
+                setStatus('connected')
+            } catch (err) {
+                console.log("connect error",err)
+                // { code: 4001, message: 'User rejected the request.' }
+            }
         }
-    }
+    };
+
 
     /**
      *
      * @param payload
      */
     async function sign(payload: any) {
-        console.log("transaction")
 
         // if (status !== 'connected') {
         //     return;
         // }
         // let connection = new Connection(clusterApiUrl('devnet'));
+
         // let {blockhash, lastValidBlockHeight} = await connection.getLatestBlockhash();
+
         // const wallet = new Solflare();
 
         // wallet.on('connect', () => console.log('connected', wallet.publicKey.toString()));
         // wallet.on('disconnect', () => console.log('disconnected'));
 
         try {
-            // await wallet.connect();
-            // @ts-ignore
+        //     await wallet.connect();
+        //     @ts-ignore
+            console.log("sign")
 
             // console.log("wallet.publicKey.toString(),",wallet.publicKey.fromPublicKey(), "lll")
             // let transaction = new Transaction()
@@ -98,7 +109,7 @@ export function useLedgerCosmosWallet() {
             // // @ts-ignore
             // transaction.feePayer = wallet.publicKey;
             // console.log("dtata", transaction, "wallet.publicKey", wallet.publicKey, "blockhash",blockhash)
-            let signed = await wallet.signTransaction(payload.transaction);
+            // let signed = await wallet.signTransaction(transaction);
 
 
 
@@ -119,7 +130,7 @@ export function useLedgerCosmosWallet() {
                     // })
             //     }
             // ));
-            console.log("transaction", signed)
+            // console.log("transaction", signed)
             // const encoder = new TextEncoder();
             // const messageBytes = encoder.encode('Test message');
             // const messageSignature = await wallet.signMessage(messageBytes, 'utf8');
@@ -132,12 +143,12 @@ export function useLedgerCosmosWallet() {
     }
 
     return {
-        publicKey,
         disconnect,
         connect,
-        status,
         sign,
-        isSolflare
+        provider,
+        status,
+        publicKey
     };
 }
 

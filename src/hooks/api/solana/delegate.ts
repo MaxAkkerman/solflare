@@ -27,7 +27,7 @@ interface Response {
  *
  * @param payload
  */
-export async function delegate(payload: Payload): Promise<Response> {
+export async function delegate(payload: Payload) {
   const { address, stakeAccountPublicKey } = payload;
 
   try {
@@ -62,13 +62,10 @@ export async function delegate(payload: Payload): Promise<Response> {
     delegateTransaction.recentBlockhash = block.blockhash;
     delegateTransaction.feePayer = userPubkey;
 
-    return {
-      network: net,
-      votePublicKey: validator,
-      serializedTransaction: delegateTransaction
-        // .serialize({ requireAllSignatures: false, verifySignatures: false })
-        // .toString('hex')
-    };
+    return delegateTransaction
+        .serialize({ requireAllSignatures: false, verifySignatures: false })
+        .toString('hex')
+
   } catch (e) {
     throw e;
   }
