@@ -56,20 +56,20 @@ function TransactionsCreate() {
             .add(
                 SystemProgram.transfer({
                     // @ts-ignore
-                    fromPubkey: publicKey,
+                    fromPubkey: new PublicKey(publicKey),
                     // @ts-ignore
-                    toPubkey: publicKey,
+                    toPubkey: new PublicKey(publicKey),
                     lamports: 1000000000,
                 })
             );
-        let {blockhash} = await connection.getLatestBlockhash();
-        // @ts-ignore
-        transaction.recentBlockhash = blockhash;
-        // @ts-ignore
-        transaction.feePayer = publicKey;
+        // let {blockhash} = await connection.getLatestBlockhash();
+        // // @ts-ignore
+        // transaction.recentBlockhash = blockhash;
+        // // @ts-ignore
+        // transaction.feePayer = publicKey;
         // @ts-ignore
         setTx(transaction)
-        console.log("dtata", transaction, "wallet.publicKey", "blockhash", blockhash)
+        console.log("dtata", transaction)
 
 
     }

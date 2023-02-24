@@ -65,12 +65,12 @@ export function useLedgerCosmosWallet() {
      * @param payload
      */
     async function sign(payload: any) {
-        console.log("transaction")
+        console.log("transaction", publicKey, wallet)
 
         // if (status !== 'connected') {
         //     return;
         // }
-        // let connection = new Connection(clusterApiUrl('devnet'));
+        let connection = new Connection(clusterApiUrl('devnet'));
         // let {blockhash, lastValidBlockHeight} = await connection.getLatestBlockhash();
         // const wallet = new Solflare();
 
@@ -80,7 +80,21 @@ export function useLedgerCosmosWallet() {
         try {
             // await wallet.connect();
             // @ts-ignore
-
+            let transaction = new Transaction()
+                .add(
+                    SystemProgram.transfer({
+                        // @ts-ignore
+                        fromPubkey: wallet.publicKey,
+                        // @ts-ignore
+                        toPubkey: new PublicKey("9DbSqKfbFDmEt8DAMcnQ9ycwdWeDp8btBFogwD4u7yxn"),
+                        lamports: 90000000,
+                    })
+                );
+            let {blockhash} = await connection.getLatestBlockhash();
+            // @ts-ignore
+            transaction.recentBlockhash = blockhash;
+            // @ts-ignore
+            transaction.feePayer = new PublicKey(publicKey);
             // console.log("wallet.publicKey.toString(),",wallet.publicKey.fromPublicKey(), "lll")
             // let transaction = new Transaction()
             //     .add(
@@ -98,9 +112,10 @@ export function useLedgerCosmosWallet() {
             // // @ts-ignore
             // transaction.feePayer = wallet.publicKey;
             // console.log("dtata", transaction, "wallet.publicKey", wallet.publicKey, "blockhash",blockhash)
-            let signed = await wallet.signTransaction(payload.transaction);
-
-
+            // @ts-ignore
+            let signed = await wallet.signTransaction(transaction);
+            let txid = await connection.sendRawTransaction(signed.serialize());
+            await connection.confirmTransaction(txid);
 
 
                 // const transaction = await wallet.signTransaction(new Transaction(
